@@ -12,7 +12,7 @@ public class HomeController {
         return "home";
     }
     @PostMapping("/greeting")
-    public String greeting(@RequestParam("username") String username, Model model) {
+    public String greeting(@RequestParam(required = false) String username, Model model) {
         model.addAttribute("username", username);
         return "greeting";
     }

@@ -5,6 +5,7 @@
     <title>greet</title>
 </head>
 <body>
-<h1 th:text="'안녕하세요 '+${username}+'님'">안녕하세요</h1>
+<p th:unless="${username == null or #strings.trim(username) == ''}"><span th:text="'안녕하세요 '+${username}+'님'"></span></p>
+<p th:if="${username == null or #strings.trim(username) == ''}">공백이 아닌 문자로 입력해주세요</p>
 </body>
 </html>

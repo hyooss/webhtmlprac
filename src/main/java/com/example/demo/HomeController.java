@@ -16,4 +16,10 @@ public class HomeController {
         model.addAttribute("username", username);
         return "greeting";
     }
+
+    @GetMapping("/greeting2")
+    public String greeting2(@RequestParam(required = false) String username, Model model) {
+        model.addAttribute("username", username);
+        return "greeting";
+    }
 }

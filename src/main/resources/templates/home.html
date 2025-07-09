@@ -1,24 +1,24 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>home</title>
     <style>
-        h1{
+        h1 {
             font-style: italic;
-            font-weight:bold;
-            color:black;
+            font-weight: bold;
+            color: black;
             background-color: red;
-            background-clip: border-box;
             width: 1000px;
         }
-        div{
+
+        div {
             width: 1000px;
             display: grid;
-            grid-template-columns: repeat(10,1fr);
+            grid-template-columns: repeat(10, 1fr);
             gap: 10px;
         }
+
         .selected {
             background-color: cornflowerblue;
             color: white;
@@ -26,151 +26,91 @@
     </style>
 </head>
 <body>
-    <h1>HOME</h1>
-    <p>이곳은 홈화면입니다</p>
-    <div>
-        <button type="submit">1</button>
-        <button type="submit">2</button>
-        <button type="submit">3</button>
-        <button type="submit">4</button>
-        <button type="submit">5</button>
-        <button type="submit">6</button>
-        <button type="submit">7</button>
-        <button type="submit">8</button>
-        <button type="submit">9</button>
-        <button type="submit">10</button>
-        <button type="submit">11</button>
-        <button type="submit">12</button>
-        <button type="submit">13</button>
-        <button type="submit">14</button>
-        <button type="submit">15</button>
-        <button type="submit">16</button>
-        <button type="submit">17</button>
-        <button type="submit">18</button>
-        <button type="submit">19</button>
-        <button type="submit">20</button>
-        <button type="submit">21</button>
-        <button type="submit">22</button>
-        <button type="submit">23</button>
-        <button type="submit">24</button>
-        <button type="submit">25</button>
-        <button type="submit">26</button>
-        <button type="submit">27</button>
-        <button type="submit">28</button>
-        <button type="submit">29</button>
-        <button type="submit">30</button>
-        <button type="submit">31</button>
-        <button type="submit">32</button>
-        <button type="submit">33</button>
-        <button type="submit">34</button>
-        <button type="submit">35</button>
-        <button type="submit">36</button>
-        <button type="submit">37</button>
-        <button type="submit">38</button>
-        <button type="submit">39</button>
-        <button type="submit">40</button>
-        <button type="submit">41</button>
-        <button type="submit">42</button>
-        <button type="submit">43</button>
-        <button type="submit">44</button>
-        <button type="submit">45</button>
-        <button type="submit">46</button>
-        <button type="submit">47</button>
-        <button type="submit">48</button>
-        <button type="submit">49</button>
-        <button type="submit">50</button>
-        <button type="submit">51</button>
-        <button type="submit">52</button>
-        <button type="submit">53</button>
-        <button type="submit">54</button>
-        <button type="submit">55</button>
-        <button type="submit">56</button>
-        <button type="submit">57</button>
-        <button type="submit">58</button>
-        <button type="submit">59</button>
-        <button type="submit">60</button>
-        <button type="submit">61</button>
-        <button type="submit">62</button>
-        <button type="submit">63</button>
-        <button type="submit">64</button>
-        <button type="submit">65</button>
-        <button type="submit">66</button>
-        <button type="submit">67</button>
-        <button type="submit">68</button>
-        <button type="submit">69</button>
-        <button type="submit">70</button>
-        <button type="submit">71</button>
-        <button type="submit">72</button>
-        <button type="submit">73</button>
-        <button type="submit">74</button>
-        <button type="submit">75</button>
-        <button type="submit">76</button>
-        <button type="submit">77</button>
-        <button type="submit">78</button>
-        <button type="submit">79</button>
-        <button type="submit">80</button>
-        <button type="submit">81</button>
-        <button type="submit">82</button>
-        <button type="submit">83</button>
-        <button type="submit">84</button>
-        <button type="submit">85</button>
-        <button type="submit">86</button>
-        <button type="submit">87</button>
-        <button type="submit">88</button>
-        <button type="submit">89</button>
-        <button type="submit">90</button>
-        <button type="submit">91</button>
-        <button type="submit">92</button>
-        <button type="submit">93</button>
-        <button type="submit">94</button>
-        <button type="submit">95</button>
-        <button type="submit">96</button>
-        <button type="submit">97</button>
-        <button type="submit">98</button>
-        <button type="submit">99</button>
-        <button type="submit">100</button>
-    </div>
-    <p>선택된 버튼: <span></span></p>
+<h1>HOME</h1>
+<p>이곳은 홈화면입니다</p>
+<div id="buttonContainer">
+    <!-- 버튼 1~100 생성됨 -->
+</div>
+<p>선택된 버튼: <span id="selectedDisplay"></span></p>
+<p>기록: <span id="histories"></span></p>
+<p>
+    <button id="backBtn">&larr;</button>
+    <button id="forwardBtn">&rarr;</button>
+</p>
+
 <script>
-    const buttons = document.querySelectorAll("button");     // 100개 버튼 가져오기
-    const display = document.querySelector("span");          // 선택 번호 표시할 곳
-    let selectedButton = null;                               // 현재 선택된 버튼 저장용
+    const buttonContainer = document.getElementById("buttonContainer");
+    const selectedDisplay = document.getElementById("selectedDisplay");
+    const hist = document.getElementById("histories");
+    const backBtn = document.getElementById("backBtn");
+    const forwardBtn = document.getElementById("forwardBtn");
 
-    // URL에서 ?btn=숫자 값을 읽기
-    const params = new URLSearchParams(window.location.search);
-    let defaultBtn = parseInt(params.get("btn"));
+    let historyList = [];
+    let currentIndex = -1;
+    let selectedButton = null;
 
-    // 숫자가 아니면 랜덤으로 초기 선택 (1~100)
-    if (isNaN(defaultBtn) || defaultBtn < 1 || defaultBtn > 100) {
-        defaultBtn = Math.floor(Math.random() * 100) + 1;
-    }
-
-    // 버튼들에 이벤트 부여
-    buttons.forEach(button => {
-        const btnNum = parseInt(button.textContent); // 버튼에 적힌 숫자
-
-        // 처음 로딩 시 defaultBtn과 같은 번호면 자동 선택
-        if (btnNum === defaultBtn) {
-            button.classList.add("selected");
-            selectedButton = button;
-            display.textContent = btnNum;
+    function applySelection(num) {
+        if (selectedButton) {
+            selectedButton.classList.remove("selected");
         }
 
-        // 클릭 이벤트
-        button.addEventListener("click", () => {
-            if (selectedButton) {
-                selectedButton.classList.remove("selected"); // 이전 선택 해제
-            }
+        const target = [...document.querySelectorAll("button")].find(
+            btn => parseInt(btn.textContent) === num
+        );
+        if (!target) return;
 
-            button.classList.add("selected");             // 현재 선택 적용
-            selectedButton = button;
-            display.textContent = button.textContent;     // 하단 텍스트 표시
+        target.classList.add("selected");
+        selectedButton = target;
+        selectedDisplay.textContent = num;
 
-            const newUrl = `${window.location.pathname}?btn=${button.textContent}`;
-            history.replaceState(null, "", newUrl);
+        const newUrl = `${window.location.pathname}?btn=${num}`;
+        history.replaceState(null, "", newUrl);
 
-        });
-    });
+        updateHistory();
+    }
+
+    function updateHistory() {
+        const shown = historyList
+            .slice(0, currentIndex + 1)  // 현재 위치까지만 잘라서
+            .map((num, idx) => idx === currentIndex ? `[${num}]` : `${num}`)
+            .join(" → ");
+        hist.textContent = shown;
+    }
+
+    function handleClick(num) {
+        if (currentIndex < historyList.length - 1) {
+            historyList = historyList.slice(0, currentIndex + 1);
+        }
+        historyList.push(num);
+        currentIndex++;
+        applySelection(num);
+    }
+
+    function goBack() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            applySelection(historyList[currentIndex]);
+        }
+    }
+
+    function goForward() {
+        if (currentIndex < historyList.length - 1) {
+            currentIndex++;
+            applySelection(historyList[currentIndex]);
+        }
+    }
+
+    // 버튼 생성 및 이벤트 등록 (1~100)
+    for (let i = 1; i <= 100; i++) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = i;
+        btn.addEventListener("click", () => handleClick(i));
+        buttonContainer.appendChild(btn);
+    }
+
+    backBtn.addEventListener("click", goBack);
+    forwardBtn.addEventListener("click", goForward);
 </script>
 </body>
 </html>

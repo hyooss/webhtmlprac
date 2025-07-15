@@ -59,6 +59,7 @@
         }
 
         undo() {
+            console.log("undo", this.currentIndex, this.history);
             if (this.currentIndex > 0) {
                 this.currentIndex--;
                 this.notifyObservers(this.getState());
@@ -66,6 +67,7 @@
         }
 
         redo() {
+            console.log("redo", this.currentIndex, this.history);
             if (this.currentIndex < this.history.length - 1) {
                 this.currentIndex++;
                 this.notifyObservers(this.getState());
@@ -98,6 +100,68 @@
         }
     }
 
+    class SelectButtonView extends Observer {
+        constructor(element) {
+            super(element);
+        }
+        update(state) {
+            // 선택된 버튼의 텍스트를 표시
+            this.element.textContent = state.selected ?? "";
+        }
+    }
+
+    class HistoryView extends Observer
+    {
+        constructor(element) {
+            super(element);
+        }
+
+        update(state) {
+            // const newUrl = `${window.location.pathname}?btn=${state.selected}`;
+            // history.replaceState(null, "", newUrl);
+            // 히스토리: [0..state.index] 까지만 표시
+            const slice = state.history.slice(0, state.index + 1);
+            historiesDisplay.textContent = slice.join(" → ");
+            // undo/redo 버튼 활성화 제어
+            // backBtn.disabled    = !state.canUndo;
+            // forwardBtn.disabled = !state.canRedo;
+
+        }
+    }
+
+    class PrevButtonView extends Observer
+    {
+        constructor(element, clickHandler) {
+            super(element);
+            this.clickHandler = clickHandler;
+
+            this.element.onclick = this.clickHandler ?? (() => {
+                window.alert("이전 버튼 클릭");
+            });
+        }
+
+        update(state) {
+            // 이전 버튼 활성화/비활성화
+            this.element.disabled = !state.canUndo;
+        }
+    }
+
+    class NextButtonView extends Observer
+    {
+        constructor(element, clickHandler) {
+            super(element);
+            this.clickHandler = clickHandler;
+            this.element.onclick = clickHandler ?? (() => {
+                window.alert("이전 버튼 클릭");
+            });
+        }
+
+        update(state) {
+            // 다음 버튼 활성화/비활성화
+            this.element.disabled = !state.canRedo;
+        }
+    }
+
     // 3) 요소 참조
     const container        = document.getElementById("buttonContainer");
     const selectedDisplay  = document.getElementById("selectedDisplay");
@@ -107,24 +171,15 @@
 
     // 4) Mediator 생성 + 화면 전체 갱신용 Observer 등록
     const mediator = new ButtonMediator();
-    mediator.addObserver({
-        update(state) {
-            // URL query 갱신
-            const newUrl = `${window.location.pathname}?btn=${state.selected}`;
-            history.replaceState(null, "", newUrl);
+    const selectButtonView = new SelectButtonView(selectedDisplay);
+    const historyView = new HistoryView(historiesDisplay);
+    const prevButtonView = new PrevButtonView(backBtn, () => mediator.undo());
+    const nextButtonView = new NextButtonView(forwardBtn, () => mediator.redo());
 
-            // 선택 텍스트
-            selectedDisplay.textContent = state.selected ?? "";
-
-            // 히스토리: [0..state.index] 까지만 표시
-            const slice = state.history.slice(0, state.index + 1);
-            historiesDisplay.textContent = slice.join(" → ");
-
-            // undo/redo 버튼 활성화 제어
-            backBtn.disabled    = !state.canUndo;
-            forwardBtn.disabled = !state.canRedo;
-        }
-    });
+    mediator.addObserver(selectButtonView);
+    mediator.addObserver(historyView);
+    mediator.addObserver(prevButtonView);
+    mediator.addObserver(nextButtonView);
 
     // 5) 버튼 생성 · View 등록 · 클릭 바인딩
     for (let i = 1; i <= 100; i++) {
@@ -139,8 +194,8 @@
     }
 
     // 6) undo/redo 바인딩
-    backBtn.addEventListener("click",  () => mediator.undo());
-    forwardBtn.addEventListener("click", () => mediator.redo());</script>
+
+</script>
 
 </body>
 </html>

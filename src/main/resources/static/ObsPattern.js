@@ -1,52 +1,23 @@
-export class Subject
-{
-
-    constructor() {
-        this.observers = [];
-    }
-
+// 옵저버 패턴 기본
+export class Subject {
+    constructor() { this.observers = []; }
     addObserver(observer) {
-        if(!observer || typeof observer.update !== 'function') {
-            throw new Error("Observer must implement an update method");
-        }
-        // Check if the observer is already added
-        if (this.observers.includes(observer)) {
-            return; // Observer already exists, no need to add again
+        if (!observer || typeof observer.update !== 'function') {
+            throw new Error("Observer must implement update(state)");
         }
         this.observers.push(observer);
+        // 등록 즉시 초기 상태를 렌더링
+        if (this.getState) observer.update(this.getState());
     }
-
-    removeObserver(observer) {
-        const index = this.observers.indexOf(observer);
-        if (index > -1) {
-            this.observers.splice(index, 1);
-        }
-    }
-
     notifyObservers(data) {
-        for (const observer of this.observers) {
-            observer.update(data);
-        }
-    }
-
-    clearObservers() {
-        this.observers = [];
-    }
-
-    getObservers() {
-        return this.observers;
+        this.observers.forEach(obs => obs.update(data));
     }
 }
-
-
 export class Observer {
     constructor(element) {
         if (!element || !(element instanceof HTMLElement)) {
-            throw new Error("Observer must be initialized with a valid HTML element");
+            throw new Error("Observer needs an HTMLElement");
         }
         this.element = element;
-
     }
 }
-
-

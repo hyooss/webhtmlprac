@@ -39,162 +39,125 @@
 </p>
 <!--<script src="/script.js" defer></script>-->
 <script type="module">
-    import { Subject, Observer } from "./ObsPattern.js";
 
-    // 1) 숫자 기반 Model (Subject 확장)
-    class ButtonMediator extends Subject {
+    import {Subject, Observer} from './ObsPattern.js';
+
+    // 1) 모델: 클릭 기록 + 커서 위치 관리
+    class CursorModel extends Subject {
         constructor() {
             super();
             this.history = [];
-            this.currentIndex = -1;
+            this.cursor = -1;
         }
-
-        addClickHistory(num) {
-            if (this.currentIndex < this.history.length - 1) {
-                this.history = this.history.slice(0, this.currentIndex + 1);
+        add(value) {
+            if (this.cursor < this.history.length - 1) {
+                this.history = this.history.slice(0, this.cursor + 1);
             }
-            this.history.push(num);
-            this.currentIndex++;
+            this.history.push(value);
+            this.cursor++;
             this.notifyObservers(this.getState());
         }
-
-        undo() {
-            console.log("undo", this.currentIndex, this.history);
-            if (this.currentIndex > 0) {
-                this.currentIndex--;
+        goTo(index) {
+            if (index >= 0 && index < this.history.length) {
+                this.cursor = index;
                 this.notifyObservers(this.getState());
             }
         }
-
-        redo() {
-            console.log("redo", this.currentIndex, this.history);
-            if (this.currentIndex < this.history.length - 1) {
-                this.currentIndex++;
-                this.notifyObservers(this.getState());
-            }
+        undo()  {
+            this.goTo(this.cursor - 1);
         }
-
+        redo()  {
+            this.goTo(this.cursor + 1);
+        }
         getState() {
             return {
-                selected: this.history[this.currentIndex] ?? null,
                 history: [...this.history],
-                index: this.currentIndex,                  // ★ 인덱스 추가
-                canUndo: this.currentIndex > 0,
-                canRedo: this.currentIndex < this.history.length - 1
+                index: this.cursor
             };
         }
     }
 
-    // 2) 숫자 기반 View (Observer)
-    class ButtonView extends Observer {
-        constructor(element, value) {
-            super(element);
-            this.value = value;
+    // 2) 히스토리 뷰: 회색/언더라인 + 클릭 이동
+    class HistoryView extends Observer {
+        constructor(el, onClick) {
+            super(el);
+            this.onClick = onClick;
         }
         update(state) {
-            if (state.selected === this.value) {
-                this.element.classList.add("selected");
-            } else {
-                this.element.classList.remove("selected");
-            }
-        }
-    }
-
-    class SelectButtonView extends Observer {
-        constructor(element) {
-            super(element);
-        }
-        update(state) {
-            // 선택된 버튼의 텍스트를 표시
-            this.element.textContent = state.selected ?? "";
-        }
-    }
-
-    class HistoryView extends Observer
-    {
-        constructor(element) {
-            super(element);
-        }
-
-        update(state) {
-            // const newUrl = `${window.location.pathname}?btn=${state.selected}`;
-            // history.replaceState(null, "", newUrl);
-            // 히스토리: [0..state.index] 까지만 표시
-            const slice = state.history.slice(0, state.index + 1);
-            historiesDisplay.textContent = slice.join(" → ");
-            // undo/redo 버튼 활성화 제어
-            // backBtn.disabled    = !state.canUndo;
-            // forwardBtn.disabled = !state.canRedo;
-
-        }
-    }
-
-    class PrevButtonView extends Observer
-    {
-        constructor(element, clickHandler) {
-            super(element);
-            this.clickHandler = clickHandler;
-
-            this.element.onclick = this.clickHandler ?? (() => {
-                window.alert("이전 버튼 클릭");
+            this.element.innerHTML = "";
+            state.history.forEach((val, idx) => {
+                const span = document.createElement("span");
+                span.textContent = val;
+                if (idx === state.index) span.style.textDecoration = "underline";
+                if (idx > state.index) span.style.color = "gray";
+                span.addEventListener("click", () => this.onClick(idx));
+                this.element.appendChild(span);
+                if (idx < state.history.length - 1) this.element.append(" → ");
             });
         }
+    }
 
+    // 3) 선택된 숫자 표시
+    class SelectView extends Observer {
         update(state) {
-            // 이전 버튼 활성화/비활성화
-            this.element.disabled = !state.canUndo;
+            this.element.textContent = state.history[state.index] ?? "";
         }
     }
 
-    class NextButtonView extends Observer
-    {
-        constructor(element, clickHandler) {
-            super(element);
-            this.clickHandler = clickHandler;
-            this.element.onclick = clickHandler ?? (() => {
-                window.alert("이전 버튼 클릭");
-            });
+    // 4) 뒤로/앞으로 버튼 제어
+    class PrevView extends Observer {
+        constructor(el, handler) {
+            super(el);
+            el.addEventListener("click", handler);
         }
-
         update(state) {
-            // 다음 버튼 활성화/비활성화
-            this.element.disabled = !state.canRedo;
+            this.element.disabled = state.index <= 0;
+        }
+    }
+    class NextView extends Observer {
+        constructor(el, handler) {
+            super(el); el.addEventListener("click", handler);
+        }
+        update(state) {
+            this.element.disabled = state.index >= state.history.length - 1;
         }
     }
 
-    // 3) 요소 참조
+    // URL 갱신용 클래스
+    class UrlView {
+        update(state) {
+            const sel = state.history[state.index];
+            const newUrl = sel != null
+                ? `${window.location.pathname}?btn=${sel}`
+                : window.location.pathname;
+            history.replaceState(null, '', newUrl);
+        }
+    }
+
+    // 5) DOM 참조
     const container        = document.getElementById("buttonContainer");
     const selectedDisplay  = document.getElementById("selectedDisplay");
     const historiesDisplay = document.getElementById("histories");
     const backBtn          = document.getElementById("backBtn");
     const forwardBtn       = document.getElementById("forwardBtn");
 
-    // 4) Mediator 생성 + 화면 전체 갱신용 Observer 등록
-    const mediator = new ButtonMediator();
-    const selectButtonView = new SelectButtonView(selectedDisplay);
-    const historyView = new HistoryView(historiesDisplay);
-    const prevButtonView = new PrevButtonView(backBtn, () => mediator.undo());
-    const nextButtonView = new NextButtonView(forwardBtn, () => mediator.redo());
+    // 6) 모델·뷰 연결
+    const model = new CursorModel();
+    model.addObserver(new HistoryView(historiesDisplay, idx => model.goTo(idx)));
+    model.addObserver(new SelectView(selectedDisplay));
+    model.addObserver(new PrevView(backBtn,  () => model.undo()));
+    model.addObserver(new NextView(forwardBtn, () => model.redo()));
 
-    mediator.addObserver(selectButtonView);
-    mediator.addObserver(historyView);
-    mediator.addObserver(prevButtonView);
-    mediator.addObserver(nextButtonView);
+    // 옵저버 등록
+    model.addObserver(new UrlView());
 
-    // 5) 버튼 생성 · View 등록 · 클릭 바인딩
+    // 7) 버튼 1~100 생성
     for (let i = 1; i <= 100; i++) {
         const btn = document.createElement("button");
         btn.textContent = i;
+        btn.addEventListener("click", () => model.add(i));
         container.appendChild(btn);
-
-        const view = new ButtonView(btn, i);
-        mediator.addObserver(view);
-
-        btn.addEventListener("click", () => mediator.addClickHistory(i));
     }
-
-    // 6) undo/redo 바인딩
-
 </script>
 
 </body>

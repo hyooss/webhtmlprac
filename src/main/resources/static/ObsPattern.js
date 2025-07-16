@@ -12,6 +12,11 @@ export class Subject {
     notifyObservers(data) {
         this.observers.forEach(obs => obs.update(data));
     }
+
+    getIterator()
+    {
+        return new Iterator(this.observers);
+    }
 }
 export class Observer {
     constructor(element) {
@@ -20,4 +25,42 @@ export class Observer {
         }
         this.element = element;
     }
+}
+
+export class Iterator {
+    constructor(subject) {
+        if (!(subject instanceof Subject)) {
+            throw new Error("Iterator needs a Subject instance");
+        }
+        this.subject = subject;
+        this.index = 0;
+    }
+    prev(){
+        if (this.index > 0) {
+            return { value: this.subject.observers[--this.index], done: false };
+        } else {
+            return { done: true };
+        }
+    }
+
+    next() {
+        if (this.index < this.subject.observers.length) {
+            return { value: this.subject.observers[this.index++], done: false };
+        } else {
+            return { done: true };
+        }
+    }
+
+    to(idx) {
+        if (idx < 0 || idx >= this.subject.observers.length) {
+            throw new Error("Index out of bounds");
+        }
+        this.index = idx;
+        return { value: this.subject.observers[this.index], done: false };
+    }
+
+    reset() {
+        this.index = 0;
+    }
+
 }
